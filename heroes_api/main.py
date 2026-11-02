@@ -1,10 +1,16 @@
 import os
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse
 
 from heroes_api import bookings, db
 from heroes_api.invoices import generate_invoice
-from heroes_api.models import BookingIn, ClientIn, TierChange
+from heroes_api.models import BookingIn, ClientIn, TierChange, Window
+
+BOARD_PAGE = Path(__file__).parent / "static" / "board.html"
 
 
 def create_app(db_path: str | None = None) -> FastAPI:
@@ -41,6 +47,14 @@ def create_app(db_path: str | None = None) -> FastAPI:
     @app.get("/heroes")
     def list_heroes():
         return [dict(row) for row in conn.execute("SELECT name, power FROM heroes ORDER BY id")]
+
+    @app.get("/board")
+    def board():
+        return FileResponse(BOARD_PAGE)
+
+    @app.get("/heroes/available")
+    def list_available_heroes(window: Annotated[Window, Query()]):
+        return bookings.available_heroes(conn, window.start, window.end)
 
     @app.post("/bookings", status_code=201)
     def create_booking(booking: BookingIn):
