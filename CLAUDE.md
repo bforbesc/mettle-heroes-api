@@ -10,11 +10,19 @@ The booking and dispatch API for Mettle & Co. Clients book heroes for missions a
 
 ## Layout
 
-- `heroes_api/main.py`: the app and its routes
-- `heroes_api/bookings.py`: creating and listing bookings
+- `heroes_api/main.py`: the app and its routes, including `GET /board`
+- `heroes_api/bookings.py`: creating and listing bookings, and the overlap check
+- `heroes_api/models.py`: request models, including the `Window` time range
+- `heroes_api/static/board.html`: the dispatch board, plain HTML and JS with no build step
 - `heroes_api/invoices.py`: monthly invoices
 - `heroes_api/db.py`: the schema and the 15 heroes
 - `tests/`: one test file per area
+
+## Bookings and time
+
+- Times are stored as ISO text without a time zone, to the minute (`2026-09-14T09:00`). SQL compares them as strings, so format every bound with `isoformat(timespec="minutes")` before querying.
+- `bookings.overlapping_bookings` is the only overlap check. A booking overlaps a window when it starts before the window ends and ends after the window starts, so a booking that only touches the window does not count. HB-101 (blocking double bookings) must reuse it.
+- `/board` JavaScript has no automated tests. Check it by hand with the server running.
 
 ## Team rules
 
